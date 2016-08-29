@@ -84,6 +84,8 @@ define([
     isHumanEntry: null,
     currentLocation: null,
     dateFormat: "LLL",
+    snapGeometry: null,
+    snappedOID: null,
 
     startup: function (config, appResponse, isPreview, node) {
       
@@ -363,7 +365,9 @@ define([
             // show popup
             this.map.infoWindow.show(graphic.geometry);
             // edit movable
-            this.editToolbar.activate(editToolbar.MOVE, graphic, null);
+            if (this.config.allowDrag){
+              this.editToolbar.activate(editToolbar.MOVE, graphic, null);
+            }
             return true;
           }
         }));
@@ -878,7 +882,7 @@ define([
             if (currentField.domain && !currentField.typeField) {
               array.forEach(currentField.domain.codedValues, lang.hitch(this, function (currentOption) {
                 radioContent = domConstruct.create("div", {
-                  className: "radio"
+                  className: "radio-inline"
                 }, radioContainer);
                 inputLabel = domConstruct.create("label", {
                   "for": fieldname + currentOption.code
@@ -914,7 +918,7 @@ define([
               array.forEach(currentField.subTypes, lang.hitch(this, function (currentOption) {
                 //Code to validate for applying has-success class
                 radioContent = domConstruct.create("div", {
-                  className: "radio"
+                  className: "radio-inline"
                 }, radioContainer);
                 inputLabel = domConstruct.create("label", {
                   "for": fieldname + currentOption.id
@@ -1142,6 +1146,10 @@ define([
           html: true
         };
         $('#' + fieldname).popover(options);
+      }
+      if(currentField.readOnly){
+        // field is read only
+        inputContent.setAttribute("readonly", "");
       }
     },
     // date range field
@@ -1572,6 +1580,7 @@ define([
           domAttr.set(dom.byId("coordinatesValue"), "innerHTML", locationCoords);
           this.addressGeometry = evt.graphic.geometry;
           this._setCoordInputs(evt.graphic.geometry);
+          this.snappedOID = null;
         }));
         // show info window on graphic click
         on(this.editToolbar, "graphic-click", lang.hitch(this, function (evt) {
@@ -1586,10 +1595,24 @@ define([
           //remove the location-error message as soon as the point on the map is selected.
           this._removeErrorNode(dom.byId("select_location").nextSibling);
           this._clearSubmissionGraphic();
-          this.addressGeometry = evt.mapPoint;
+          //check to get geometry of features to snap to instead of click geometry
+          if  ('graphic' in evt && (this.config.snapLayers.indexOf(evt.graphic._graphicsLayer.id) > -1)){
+              this.snapGeometry = evt.graphic.geometry;
+              this._savedFields.forEach(function(field){
+                  domAttr.set(field.name, "value", evt.graphic.attributes[field.name]);
+              })
+              this.snappedOID = evt.graphic.attributes["OBJECTID"];
+          }else{
+              this.snapGeometry = evt.mapPoint;
+              this._savedFields.forEach(function(field){
+                  domAttr.set(field.name, "value", '');
+              })
+              this.snappedOID = null;
+          };
+          this.addressGeometry = this.snapGeometry;
           this._setSymbol(this.addressGeometry, true);
           // get coords string
-          var coords = this._calculateLatLong(evt.mapPoint);
+          var coords = this._calculateLatLong(this.snapGeometry);
           domAttr.set(dom.byId("coordinatesValue"), "innerHTML", coords);
           this._setCoordInputs(evt.mapPoint);
         }));
@@ -1603,7 +1626,7 @@ define([
           //Enables scrollwheel zoom 3 seconds after a user hovers over the map
           setTimeout(lang.hitch(this, function () {
             this.map.enableScrollWheelZoom();
-          }), 3000);
+          }), 0);
           mouseWheel.remove();
         }));
         // Add desirable touch behaviors here
@@ -2217,8 +2240,17 @@ define([
       });
       featureData.geometry = {};
       featureData.geometry = new Point(Number(this.addressGeometry.x), Number(this.addressGeometry.y), this.map.spatialReference);
+        console.log(featureData);
+      if (this.snappedOID != null && this.config.updateExistingFeatures) {
+          featureData.attributes["OBJECTID"] = this.snappedOID;
+          updates = [featureData];
+          adds = null;
+      } else {
+          updates = null;
+          adds = [featureData];
+      }
       //code for apply-edits
-      this._formLayer.applyEdits([featureData], null, null, lang.hitch(this, function (addResults) {
+      this._formLayer.applyEdits(adds, updates, null, lang.hitch(this, function (addResults) {
         // Add attachment on success
         if (addResults[0].success && this.isHumanEntry) {
           if (query(".fileToSubmit", userFormNode).length === 0) {
@@ -2243,7 +2275,7 @@ define([
         }
       }), lang.hitch(this, function () {
         // no longer editable
-        this._formLayer.setEditable(false);
+        this._formLayer.setEditable(true);
         // remove error
         domConstruct.destroy(query(".errorMessage")[0]);
         // open error
