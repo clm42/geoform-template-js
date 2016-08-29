@@ -3,7 +3,7 @@ define({
     //default web map, default app color theme and more. These values can be overwritten by template configuration settings
     //and url parameters.
     "appid": "",
-    "webmap": "0c5cb13c4fc54b28bb26a125221ed96f",
+    "webmap": "",
     "form_layer": {
         "id": ""
     },
@@ -13,6 +13,7 @@ define({
         "Description": ""
     },
     "fields": {
+        
     },
     "theme": "basic", // see values in themes.js
     "oauthappid": null,
@@ -25,41 +26,41 @@ define({
     //Enter the url to your organizations bing maps key if you want to use bing basemaps
     "bingmapskey": "",
     //Defaults to arcgis.com. Set this value to your portal or organization host name.
-    "sharinghost": location.protocol + "//" + "www.arcgis.com",
+    "sharinghost": location.protocol + "//" + "",
     "units": null,
-    "useSmallHeader": false,
-    "enableSharing": true,
+    "useSmallHeader": true,
+    "enableSharing": false,
     "defaultMapExtent": true,
-    "pushpinColor": "blue",
+    "pushpinColor": "orange",
     "nextBasemap": "hybrid",
-    "defaultBasemap": "topo",
+    "defaultBasemap": "streets",
     "selectedTitleField": {},
-    "disableViewer": false,
-    "enableAttachments": true,
+    "disableViewer": true,
+    "enableAttachments": false,
     "attachmentIsRequired": false,
     "attachmentLabel": "",
     "attachmentHelpText": "",
     "showLayer": true,
-    "disableLogo": false,
-    "enableBasemapToggle": false,
+    "disableLogo": true,
+    "enableBasemapToggle": true,
     "enableOfflineSupport": true,
-    "locate":false,
+    "locate": false,
     "locationSearchOptions": {
         "enableMyLocation": true,
         "enableSearch": true,
         "enableLatLng": true,
-        "enableUSNG": false,
+        "enableUSNG": true,
         "enableMGRS": false,
         "enableUTM": false
     },
     "locationSearch": true,
     //When searchExtent is true the locator will prioritize results within the current map extent.
     "searchExtent": false,
-    "searchLayers":[{
+    "searchLayers": [{
         "id": "",
         "fields": []
     }],
-    "attachmentInfo":{
+    "attachmentInfo": {
     },
     "submitButtonText": "",
     "viewSubmissionsText": "",
@@ -78,5 +79,9 @@ define({
         }]
     },
     "bitlyLogin": "arcgis",
-    "bitlyKey": "R_b8a169f3a8b978b9697f64613bf1db6d"
+    "bitlyKey": "R_b8a169f3a8b978b9697f64613bf1db6d",
+    //Point feature layers in the webmap to snap to when clicked. Must be layers in a feature service, not a map service.
+    "snapLayers": [],
+    "updateExistingFeatures": true,
+    "allowDrag": true
 });
