@@ -1580,6 +1580,9 @@ define([
           domAttr.set(dom.byId("coordinatesValue"), "innerHTML", locationCoords);
           this.addressGeometry = evt.graphic.geometry;
           this._setCoordInputs(evt.graphic.geometry);
+          this._savedFields.forEach(function(field){
+                  domAttr.set(field.name, "value", '');
+          })
           this.snappedOID = null;
         }));
         // show info window on graphic click
@@ -2240,7 +2243,6 @@ define([
       });
       featureData.geometry = {};
       featureData.geometry = new Point(Number(this.addressGeometry.x), Number(this.addressGeometry.y), this.map.spatialReference);
-        console.log(featureData);
       if (this.snappedOID != null && this.config.updateExistingFeatures) {
           featureData.attributes["OBJECTID"] = this.snappedOID;
           updates = [featureData];
@@ -2250,9 +2252,18 @@ define([
           adds = [featureData];
       }
       //code for apply-edits
-      this._formLayer.applyEdits(adds, updates, null, lang.hitch(this, function (addResults) {
+      this._formLayer.applyEdits(adds, updates, null, lang.hitch(this, function (addResults, updateResults) {
+        var success = false;
+        success = updateResults[0].success;
+        if (0 in addResults) {
+            success = addResults[0].success;
+        }
+        if (0 in updateResults) {
+            success = updateResults[0].success;
+        }
+        console.log(success);
         // Add attachment on success
-        if (addResults[0].success && this.isHumanEntry) {
+        if (success && this.isHumanEntry) {
           if (query(".fileToSubmit", userFormNode).length === 0) {
             this._resetAndShare();
           } else {
@@ -2262,20 +2273,25 @@ define([
               fileObjArray.push(query(".formToSubmit", userFormNode)[i].id);
             }
             this.arrPendingAttachments = fileObjArray.reverse();
-            this._addAttachment(addResults[0].objectId, dom.byId(this.arrPendingAttachments.pop()));
+            if (addResults[0].success) {
+                this._addAttachment(addResults[0].objectId, dom.byId(this.arrPendingAttachments.pop()));
+            }
+            if (updateResults[0].success) {
+                this._addAttachment(updateResults[0].objectId, dom.byId(this.arrPendingAttachments.pop()));
+            }
           }
           return true;
         }
         domConstruct.destroy(query(".errorMessage")[0]);
         // open error modal if unsuccessful
-        if (!addResults[0].success || (!this.isHumanEntry && addResults[0].success)) {
+        if (!success || (!this.isHumanEntry && success)) {
           this._openErrorModal();
           this._verifyHumanEntry();
           return;
         }
       }), lang.hitch(this, function () {
         // no longer editable
-        this._formLayer.setEditable(true);
+        this._formLayer.setEditable(false);
         // remove error
         domConstruct.destroy(query(".errorMessage")[0]);
         // open error
