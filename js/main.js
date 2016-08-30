@@ -1431,6 +1431,7 @@ define([
     },
     // validate form input
     _validateUserInput: function (error, node, inputValue, iskeyPress) {
+        console.log(error,node,inputValue,iskeyPress);
       if (domClass.contains(node, "filterSelect") && inputValue === "" && domClass.contains(node.parentElement, "mandatory")) {
         this._showErrorMessageDiv(error, node.parentElement.children[0]);
         domClass.add(node.parentElement, "has-error");
@@ -2261,7 +2262,6 @@ define([
         if (0 in updateResults) {
             success = updateResults[0].success;
         }
-        console.log(success);
         // Add attachment on success
         if (success && this.isHumanEntry) {
           if (query(".fileToSubmit", userFormNode).length === 0) {
@@ -2273,10 +2273,10 @@ define([
               fileObjArray.push(query(".formToSubmit", userFormNode)[i].id);
             }
             this.arrPendingAttachments = fileObjArray.reverse();
-            if (addResults[0].success) {
+            if (0 in addResults) {
                 this._addAttachment(addResults[0].objectId, dom.byId(this.arrPendingAttachments.pop()));
             }
-            if (updateResults[0].success) {
+            if (0 in addResults) {
                 this._addAttachment(updateResults[0].objectId, dom.byId(this.arrPendingAttachments.pop()));
             }
           }
